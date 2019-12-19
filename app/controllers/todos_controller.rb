@@ -1,58 +1,62 @@
 class TodosController < ApplicationController
-  before_action :set_todo, only: [:show, :edit, :update, :destroy]
-
-  # GET /todos
-  def index
-    @todos = Todo.all
-  end
-
-  # GET /todos/1
-  def show
-  end
-
-  # GET /todos/new
-  def new
-    @todo = Todo.new
-  end
-
-  # GET /todos/1/edit
-  def edit
-  end
-
-  # POST /todos
-  def create
-    @todo = Todo.new(todo_params)
-
-    if @todo.save
-      redirect_to @todo, notice: 'Todo was successfully created.'
-    else
-      render :new
+  #before_actionで,アクション前に実行されるメソッドを定義しています。
+  #参考:https://qiita.com/ebi_death/items/3912630e32268c9cce46  
+    before_action :authenticate_user!
+    before_action :set_goal
+    before_action :set_todo, only: [:show, :edit, :update, :destroy, :sort]
+  
+  
+    # GET /todos/new
+    def new
+  #@goalに紐付いたtodosをnewしています
+      @todo = @goal.todos.new
     end
-  end
-
-  # PATCH/PUT /todos/1
-  def update
-    if @todo.update(todo_params)
-      redirect_to @todo, notice: 'Todo was successfully updated.'
-    else
-      render :edit
+  
+    # GET /todos/1/edit
+    def edit
     end
-  end
-
-  # DELETE /todos/1
-  def destroy
-    @todo.destroy
-    redirect_to todos_url, notice: 'Todo was successfully destroyed.'
-  end
-
-  private
-    # Use callbacks to share common setup or constraints between actions.
+  
+    def sort
+    end
+  
+    # POST /todos
+    def create
+      @todo = @goal.todos.new(todo_params)
+  
+      if @todo.save
+        @status = true
+      else
+        @status = false
+      end
+    end
+  
+    # PATCH/PUT /todos/1
+    def update  
+    # todo_paramsはこのクラスのprivate以下で定義しています。  
+      if @todo.update(todo_params)
+        @status = true
+      else
+        @status = false
+      end
+    end
+  
+    # DELETE /todos/1
+    def destroy
+      @todo.destroy
+    end
+  
+    private
+  
+    def set_goal
+      @goal = current_user.goals.find_by(id: params[:goal_id])
+      redirect_to(goals_url, alert: "ERROR!!") if @goal.blank?
+    end
+  
     def set_todo
-      @todo = Todo.find(params[:id])
+      @todo = @goal.todos.find_by(id: params[:id])
     end
-
-    # Only allow a trusted parameter "white list" through.
+  
     def todo_params
       params.require(:todo).permit(:content, :goal_id, :position, :done)
     end
-end
+  end
